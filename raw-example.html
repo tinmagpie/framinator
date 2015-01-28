@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>The Framinator!</title>
+	<style>
+		html {
+			box-sizing: border-box;
+		}
+		*, *:before, *:after {
+			box-sizing: inherit;
+		}
+		
+		#drop_zone {
+			height: 5em;
+			border: dashed 4px #62B9ED;
+			border-radius: 4px;
+			padding: 1em;
+		}
+		#drop_zone.dragover {
+			border-color: red;
+		}
+	</style>
+</head>
+<body>
+<div id="drop_zone">Drop files here</div>
+<output id="output"></output>
+<script>
+	var output = document.querySelector('#output');
+	
+	function handleFileSelect(evt) {
+		output.innerHTML = '';
+		
+		evt.stopPropagation();
+		evt.preventDefault();
+
+		var files = evt.dataTransfer.files; // FileList object.
+		var canvas,
+			context,
+			img,
+			reader;
+		
+		for (var i = 0, f; f = files[i]; i++) {
+			if (f.type.match(/^image\/.*/)) {
+				reader = new FileReader();
+				reader.addEventListener('load', addCanvas, false);
+				reader.readAsDataURL(f);
+			}
+		}
+	}
+  
+	function addCanvas(evt) {
+		var canvas = document.createElement('canvas'),
+			context = canvas.getContext('2d'),
+			img = new Image(),
+			maxWidth = 200,
+			ratio;
+			
+			img.src = evt.target.result;
+			
+			if (img.width > maxWidth) {
+				ratio = maxWidth / img.width;
+				
+				img.width = img.width * ratio;
+				img.height = img.height * ratio;
+			}
+			
+			canvas.width = img.width;
+			canvas.height = img.height;
+			
+			canvas.draggable = 'true';
+			canvas.ondragstart = handleCanvasDragStart;
+			
+			context.drawImage(img,0,0);
+			
+			output.appendChild(canvas);
+	}
+	
+	function handleCanvasDragStart(evt) {
+		evt.dataTransfer.setDragImage(evt.target,0,0);
+	}
+
+	function handleDragOver(evt) {
+		evt.stopPropagation();
+		evt.preventDefault();
+		evt.dataTransfer.dropEffect = 'copy'; // Explicitly show this is a copy.
+		this.classList.add('dragover');
+	}
+  
+	function handleDragLeave(evt) {
+		this.classList.remove('dragover');
+	}
+
+  // Setup the dnd listeners.
+  var dropZone = document.getElementById('drop_zone');
+  dropZone.addEventListener('dragover', handleDragOver, false);
+  dropZone.addEventListener('dragleave', handleDragLeave, false);
+  dropZone.addEventListener('drop', handleFileSelect, false);
+</script>
+</body>
+</html>
